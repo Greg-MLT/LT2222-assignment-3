@@ -14,6 +14,9 @@ def main(args):
     print("\nFirst few labels:")
     print(data["category"].head())
 
+    print("\nFirst sentence as characters:")
+    print(list(data["text"].iloc[0]))
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     
