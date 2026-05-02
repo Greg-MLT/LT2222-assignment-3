@@ -1,0 +1,3 @@
+*.tsv
+out*.txt
+__pycache__/

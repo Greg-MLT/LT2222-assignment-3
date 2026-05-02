@@ -1,79 +1,90 @@
-import argparse
-import pandas as pd
-from gensim.models import FastText
-import numpy as np
-import os
+"""
+Part 2: Sentence Embeddings
+This script takes a TSV file of Chinese sentences and their topic labels,
+trains FastText character-level embeddings on the text, and converts each
+sentence into a fixed-length vector (sentence embedding) by averaging the
+character embeddings.  The script outputs a file containing one embedding per sentence.
+"""
 
-def sentence_to_embedding(sentence, model):
-    vectors = [model.wv[char] for char in sentence]
-    return np.mean(vectors, axis=0)
+import argparse # handles command line arguments
+import pandas as pd # manage table data
+from gensim.models import FastText # learn embeddings
+import numpy as np # math: compute mean of token-level vectors into sentence-level representation
+import os # handle file paths
+
+# Convert a tokenized sentence (list of characters) into a sentence embedding using FastText
+def sentence_to_embedding(sentence, model): # input sentence (split into characters), FastText model
+    vectors = [model.wv[char] for char in sentence] # iterate over each character and retrieve its character-level vector
+    return np.mean(vectors, axis=0) # average character embeddings for sentence-level vector
 
 def main(args):
+
+    # print status report
     print("Training embeddings;")
     print("Input file:", args.input)
     print("Output file:", args.output)
 
-    data = pd.read_csv(args.input, sep="\t")
+    data = pd.read_csv(args.input, sep="\t") # load TSV file into pandas table
 
-    print("First few sentences:")
-    print(data["text"].head())
+    ## debug: data inspection
+    #print("First few sentences:")
+    #print(data["text"].head()) # demonstrate first few rows from 'text' column
 
-    print("\nFirst few labels:")
-    print(data["category"].head())
+    #print("\nFirst few labels:")
+    #print(data["category"].head()) # show first few topic labels
+    
+    #print("\nFirst sentence as characters:")
+    #print(list(data["text"].iloc[0])) # show first sentence as characters
 
-    print("\nFirst sentence as characters:")
-    print(list(data["text"].iloc[0]))
+    sentences = data["text"].apply(list) # from 'text' column in 'data' convert each sentence to list of characters
 
-    sentences = data["text"].apply(list)
-
-    print("\nTraining FastText model...")
+    print("\nTraining FastText model...") # status update: initiating training of model
 
     model = FastText(
-        sentences=sentences,
-        vector_size=args.dim,
-        window=3,
-        min_count=1,
-        epochs=5
+        sentences=sentences, # sentences as lists of characters
+        vector_size=args.dim, # number of dimensions per vector; dim set in command line
+        window=3, # context is +/- 3 positions
+        min_count=1, # keeps all characters
+        epochs=5 # 5 iterations over the data for training
     )
     
-    print("Model trained.")
+    print("Model trained.") # status update: training completed
 
-    print("\nFirst sentence embedding:")
+    ## debug: embedding of first sentence for inspection
+    #print("\nFirst sentence embedding:") # first sentence status update
+    #first_sentence = sentences.iloc[0] # select list of first sentence characters
+    #sentence_embedding = sentence_to_embedding(first_sentence, model) # compute first sentence embedding by averaging character vectors
+    #print(sentence_embedding) # print sentence embedding
 
-    first_sentence = sentences.iloc[0]
-    sentence_embedding = sentence_to_embedding(first_sentence, model)
+    # calculate sentence embeddings and report status
+    print("\nCreating embeddings for all sentences...") # status update: calculating embeddings
+    all_embeddings = sentences.apply(lambda s: sentence_to_embedding(s, model)) # calculate all sentence embeddings
+    print("Done.") # status update: embeddings calculated
 
-    print(sentence_embedding)
+    ## debug: print samples
+    #print("\nFirst 3 sentence embeddings:")
+    #print(all_embeddings.head(3)) # print first 3 sentence embeddings
 
-    print("\nCreating embeddings for all sentences...")
+    #print("\nVector for one character:")
+    #print(model.wv[sentences.iloc[0][0]]) # print vector for a single character
 
-    all_embeddings = sentences.apply(lambda s: sentence_to_embedding(s, model))
+    #print("\nFirst 3 sentences as character lists:")
+    #print(sentences.head(3)) # print first 3 sentences as character lists
 
-    print("Done.")
+    embedding_df = pd.DataFrame(all_embeddings.tolist()) # convert sentence embeddings to table for later use; rows = sentences, columns embedding dimensions
 
-    print("\nFirst 3 sentence embeddings:")
-    print(all_embeddings.head(3))
+    embedding_df.to_csv(args.output, sep="\t", index=False) # save table (embedding_df) to file; path designated in command line
 
-    print("\nVector for one character:")
-    print(model.wv[sentences.iloc[0][0]])
+    print("\nEmbeddings saved to:") # status: saved file location
+    print(os.path.abspath(args.output)) # print user-established filepath
 
-    print("\nFirst 3 sentences as character lists:")
-    print(sentences.head(3))
-
-    embedding_df = pd.DataFrame(all_embeddings.tolist())
-
-    embedding_df.to_csv(args.output, sep="\t", index=False)
-
-    print("\nEmbeddings saved to:")
-    print(os.path.abspath(args.output))
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
+if __name__ == "__main__": # if current file is executed directly, run this block
+    parser = argparse.ArgumentParser() # interpret command line input
     
-    parser.add_argument("--input", type=str, help="Path to input file")
-    parser.add_argument("--output", type=str, help="Path to output file")
-    parser.add_argument("--dim", type=int, default=50, help="Embedding dimension")
+    parser.add_argument("--input", type=str, required=True, help="Path to input file") # command-line path to input TSV file
+    parser.add_argument("--output", type=str, required=True, help="Path to output file") # command-line path where embeddings will be saved
+    parser.add_argument("--dim", type=int, default=50, help="Embedding dimension") # number of dimensions in each embedding vector
     
-    args = parser.parse_args()
+    args = parser.parse_args() # read command line and convert to usable variables (see above)
     
-    main(args)
+    main(args) # function call to 'main' with 'args' as argument
