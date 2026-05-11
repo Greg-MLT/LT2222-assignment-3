@@ -1,11 +1,10 @@
 """
-Part 2: Sentence Embeddings
+--Part 2: Sentence Embeddings--
 This script takes a TSV file of Chinese sentences and their topic labels,
 trains FastText character-level embeddings on the text, and converts each
 sentence into a fixed-length vector (sentence embedding) by averaging the
 character embeddings.  The script outputs a file containing one embedding per sentence.
 """
-
 import argparse # handles command line arguments
 import pandas as pd # manage table data
 from gensim.models import FastText # learn embeddings
@@ -26,7 +25,7 @@ def main(args):
 
     data = pd.read_csv(args.input, sep="\t") # load TSV file into pandas table
 
-    ## debug: data inspection
+    ## debug: a look at the data file
     #print("First few sentences:")
     #print(data["text"].head()) # demonstrate first few rows from 'text' column
 
@@ -50,7 +49,7 @@ def main(args):
     
     print("Model trained.") # status update: training completed
 
-    ## debug: embedding of first sentence for inspection
+    ## debug: a look at embedding of first sentence
     #print("\nFirst sentence embedding:") # first sentence status update
     #first_sentence = sentences.iloc[0] # select list of first sentence characters
     #sentence_embedding = sentence_to_embedding(first_sentence, model) # compute first sentence embedding by averaging character vectors
