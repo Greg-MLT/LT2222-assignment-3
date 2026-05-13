@@ -98,15 +98,20 @@ def main(args): # args contains parsed command-line arguments
 
     model = TopicClassifier(input_dim, hidden_dim, output_dim) # create the NN object using chosen layer sizes
 
-    # note: added class weighting to loss function later training runs
-    class_counts = np.bincount(y)
-    class_weights = 1.0 / class_counts 
-    class_weights = class_weights / class_weights.sum() * len(class_counts) 
-    class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32) 
-    loss_function = nn.CrossEntropyLoss(weight=class_weights_tensor) # measure prediction error (loss) 
+    # optional class weighting modification added during later runs
+    if args.use_class_weights:
+        class_counts = np.bincount(y)
+        class_weights = 1.0 / class_counts
+        class_weights = class_weights / class_weights.sum() * len(class_counts)
+        class_weights_tensor = torch.tensor(class_weights, dtype=torch.float32)
 
-    # note: this was the setting for the initial run
-    # loss_function = nn.CrossEntropyLoss() # measure prediction error (loss) 
+        loss_function = nn.CrossEntropyLoss(weight=class_weights_tensor)
+
+        print("Using class-weighted loss.")
+    else:
+        loss_function = nn.CrossEntropyLoss()
+
+        print("Using standard loss.")
 
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001) # update model weights based on loss (optimize)
 
@@ -184,6 +189,7 @@ if __name__ == "__main__": # run only if this file is executed directly
     parser.add_argument("--output_model", type=str, required=True) # add required command-line path argument for model 
     parser.add_argument("--epochs", type=int, default=10) # add command-line argument for number of epochs (default to 10)
     parser.add_argument("--batch_size", type=int, default=32) # add command-line argument for batch size (default to 32)
+    parser.add_argument("--use_class_weights", action="store_true") # add command-line argument for class weighting modification
 
     parser.add_argument("--plot_output", type=str, required=False) # added for bonus 1: add command-line argument for plot output
     
